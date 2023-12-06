@@ -9,12 +9,15 @@ from langchain.agents.toolkits import Chroma(
 
 def main():
 
-  text_splitter, embeddings = text_split_embeddings(model_name = 'inception-mbzuai/jais-13b' )
-  client , collection  = get_pdf_embeddings( text_splitter, embeddings) 
-  chroma_vectorstore = Chroma(
-      client=client,
-      collection_name="my_collection",
-      embedding_function= embeddings)
+    text_splitter, embeddings = text_split_embeddings(model_name = "mistralai/Mistral-7B-Instruct-v0.1" )
+    client , collection  = get_pdf_embeddings( text_splitter, embeddings) 
+        
+    def response(text, collection):
+        results = collection.query(
+        query_texts=[f"{text}"],
+        n_results=2)
+    
+    return results
 
 
 
@@ -22,9 +25,17 @@ def main():
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 jais_llm = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto", trust_remote_code=True)
 
+
+
+
+
+
+
+
+
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-model_path = "inception-mbzuai/jais-13b"
+model_path = "mistralai/Mistral-7B-Instruct-v0.1"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
