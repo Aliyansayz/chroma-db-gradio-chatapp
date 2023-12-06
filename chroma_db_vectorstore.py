@@ -22,7 +22,7 @@ def text_split_embeddings(model_name):
         
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         # create the open-source embedding function 'embeddings'
-        model_name =  "inception-mbzuai/jais-13b"
+        model_name = "mistralai/Mistral-7B-Instruct-v0.1"
         embeddings = HuggingFaceEmbeddings(model_name= model_name )
         # Initialize Chroma DB client
         return  text_splitter, embeddings
@@ -31,7 +31,7 @@ def text_split_embeddings(model_name):
 def  get_pdf_embeddings( text_splitter, embeddings):
         
         client = chromadb.PersistentClient(path="./db")
-        collection = client.create_collection(name="my_collection")
+        collection = client.get_or_create_collection(name="my_collection")
         for filename in os.listdir('./input'):
             if filename.endswith('.pdf'):
                 # Convert PDF to text
@@ -61,11 +61,4 @@ def  get_pdf_embeddings( text_splitter, embeddings):
         return  client , collection    
 
 
-chroma_vectorstore = Chroma(
-    client=client,
-    collection_name="my_collection",
-    embedding_function= embeddings)
-
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-jais_llm = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto", trust_remote_code=True)
 
