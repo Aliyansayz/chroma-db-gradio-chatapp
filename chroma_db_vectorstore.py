@@ -18,41 +18,47 @@ def pdf_to_text(file_path):
     return text
 
 # Initialize text splitter and embeddings
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-
-# create the open-source embedding function 'embeddings'
-embeddings = HuggingFaceEmbeddings(model_name="inception-mbzuai/jais-13b")
-
-# Initialize Chroma DB client
-client = chromadb.PersistentClient(path="./db")
-collection = client.create_collection(name="my_collection")
-
+def text_split_embeddings(model_name):
+        
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        # create the open-source embedding function 'embeddings'
+        model_name =  "inception-mbzuai/jais-13b"
+        embeddings = HuggingFaceEmbeddings(model_name= model_name )
+        # Initialize Chroma DB client
+        return  text_splitter, embeddings
+        
 # Process each PDF in the ./input directory
-for filename in os.listdir('./input'):
-    if filename.endswith('.pdf'):
-        # Convert PDF to text
-        text = pdf_to_text(os.path.join('./input', filename))
-
-        # Split text into chunks
-        chunks = text_splitter.split_text(text)
-
-        # Convert chunks to vector representations and store in Chroma DB
-        documents_list = []
-        embeddings_list = []
-        ids_list = []
+def  get_pdf_embeddings( text_splitter, embeddings):
         
-        for i, chunk in enumerate(chunks):
-            vector = embeddings.embed_query(chunk)
-            
-            documents_list.append(chunk)
-            embeddings_list.append(vector)
-            ids_list.append(f"{filename}_{i}")
+        client = chromadb.PersistentClient(path="./db")
+        collection = client.create_collection(name="my_collection")
+        for filename in os.listdir('./input'):
+            if filename.endswith('.pdf'):
+                # Convert PDF to text
+                text = pdf_to_text(os.path.join('./input', filename))
         
+                # Split text into chunks
+                chunks = text_splitter.split_text(text)
         
-        collection.add(
-            embeddings=embeddings_list,
-            documents=documents_list,
-            ids=ids_list)
+                # Convert chunks to vector representations and store in Chroma DB
+                documents_list = []
+                embeddings_list = []
+                ids_list = []
+                
+                for i, chunk in enumerate(chunks):
+                    vector = embeddings.embed_query(chunk)
+                    
+                    documents_list.append(chunk)
+                    embeddings_list.append(vector)
+                    ids_list.append(f"{filename}_{i}")
+                
+                
+                collection.add(
+                    embeddings=embeddings_list,
+                    documents=documents_list,
+                    ids=ids_list)
+                
+        return  client , collection    
 
 
 chroma_vectorstore = Chroma(
